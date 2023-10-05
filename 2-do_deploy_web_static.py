@@ -1,19 +1,34 @@
 #!/usr/bin/python3
-# Fabscript to distributes an archive to a web server.->1-pack_web_static.py
-import os.path
-from fabric.api import env
-from fabric.api import put
-from fabric.api import run
+""" Does deployment"""
+
+from fabric.api import *
+import os
 
 env.hosts = ['54.90.40.168', '100.26.234.58']
+env.user = "ubuntu"
 
 
 def do_deploy(archive_path):
-    """Distributes an archive to a web server.
+    """ Deploys archive to servers"""
+    if not os.path.exists(archive_path):
+        return False
 
-    Args:
-        archive_path (str): The path of the archive to distribute.
-    Returns:
-        If the file doesn't exist at archive_path or an error occurs - False.
-        Otherwise - True.
-    """
+    results = []
+
+    res = put(archive_path, "/tmp")
+    results.append(res.succeeded)
+
+    basename = os.path.basename(archive_path)
+    if basename[-4:] == ".tgz":
+        name = basename[:-4]
+    newdir = "/data/web_static/releases/" + name
+    run("mkdir -p " + newdir)
+    run("tar -xzf /tmp/" + basename + " -C " + newdir)
+
+    run("rm /tmp/" + basename)
+    run("mv " + newdir + "/web_static/* " + newdir)
+    run("rm -rf " + newdir + "/web_static")
+    run("rm -rf /data/web_static/current")
+    run("ln -s " + newdir + " /data/web_static/current")
+
+    return True
