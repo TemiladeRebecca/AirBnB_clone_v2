@@ -1,13 +1,13 @@
 #!/usr/bin/python3
-# Fabscript to distribute an archive to web server.->2-do_deploy_web_static.py
-import os.path
-from datetime import datetime
-from fabric.api import env
-from fabric.api import local
-from fabric.api import put
-from fabric.api import run
+"""
+Fabric script based on the file 2-do_deploy_web_static.py that creates and
+distributes an archive to the web servers
+"""
 
-env.hosts = ['54.90.40.168', '100.26.234.58']
+from fabric.api import env, local, put, run
+from datetime import datetime
+from os.path import exists, isdir
+env.hosts = ['34.75.208.81']
 
 
 def do_pack():
