@@ -1,36 +1,40 @@
 #!/usr/bin/python3
-"""Module: Starts a Flask web app and fetches data from storage engine"""
-from flask import Flask, render_template
+"""Starts a Flask web application.
+The application listens on 0.0.0.0, port 5000.
+Routes:
+    /states: HTML page with a list of all State objects.
+    /states/<id>: HTML page displaying the given state with <id>.
+"""
 from models import storage
-from models.state import State
-
+from flask import Flask
+from flask import render_template
 
 app = Flask(__name__)
 
 
+@app.route("/states", strict_slashes=False)
+def states():
+    """Displays an HTML page with a list of all States.
+    States are sorted by name.
+    """
+    states = storage.all("State")
+    return render_template("9-states.html", state=states)
+
+
+@app.route("/states/<id>", strict_slashes=False)
+def states_id(id):
+    """Displays an HTML page with info about <id>, if it exists."""
+    for state in storage.all("State").values():
+        if state.id == id:
+            return render_template("9-states.html", state=state)
+    return render_template("9-states.html")
+
+
 @app.teardown_appcontext
-def close_session(cls):
-    """Closes session"""
+def teardown(exc):
+    """Remove the current SQLAlchemy session."""
     storage.close()
 
 
-@app.route('/states', strict_slashes=False)
-@app.route('/states/<id>', strict_slashes=False)
-def states_state(id=None):
-    """lists states from storage engine"""
-    if id:
-        states = storage.all(State)
-        key = 'State.' + id
-        if key in states:
-            state = states[key]
-        else:
-            state = None
-        states = []
-    else:
-        states = list(storage.all(State).values())
-    return render_template('9-states.html', **locals())
-
-
-if __name__ == '__main__':
-    storage.reload()
-    app.run("0.0.0.0", 5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
